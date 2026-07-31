@@ -28,4 +28,10 @@ Reduce database load, Improve response time
 2. If cache has data return it
 3. Cache doesn't have data, read from main database then save in cache
 
+------ pub / sub --------
+pub --> publish 
+sub --> subscribe
+publiser sends a message
+subscriber listens and receives the messsages
 
+|--> channel is the topic name both(pub/sub) sides use
