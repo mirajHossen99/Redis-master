@@ -21,8 +21,11 @@ function mapProductRow(row: ProductRow): Product {
 }
 
 const PRODUCTS_ALL_CACHE_KEY = "products:all";
-
 const PRODUCTS_CACHE_TTL_SECONDS = 60;
+
+function getProductCacheKey(productId: number): string {
+  return `products:id:${productId}`;
+}
 
 export async function fetchAllProductsFromDatabase(filters: {
   category?: string;
@@ -84,7 +87,9 @@ export async function getAllProducts(filters: {
   return products;
 }
 
-export async function getProductById(id: number): Promise<Product | null> {
+export async function fetchSingleProductFromDatabase(
+  id: number,
+): Promise<Product | null> {
   const result = await pool.query<ProductRow>(
     "SELECT * FROM products WHERE id = $1",
     [id],
@@ -97,6 +102,45 @@ export async function getProductById(id: number): Promise<Product | null> {
   return mapProductRow(result.rows[0]);
 }
 
+export async function getProductById(id: number): Promise<Product | null> {
+  const cacheKey = getProductCacheKey(id);
+
+  const cachedProduct = await redisClient.get(cacheKey);
+
+  if (cachedProduct) {
+    console.log("Cache HIT: ", cacheKey);
+
+    return JSON.parse(cachedProduct) as Product;
+  }
+
+  console.log("Cache MISS: ", cacheKey);
+  const product = await fetchSingleProductFromDatabase(id);
+
+  if (!product) {
+    return null;
+  }
+  await redisClient.setEx(
+    cacheKey,
+    PRODUCTS_CACHE_TTL_SECONDS,
+    JSON.stringify(product),
+  );
+  console.log("Cache SET: ", cacheKey);
+
+  return product;
+}
+
+async function deleteProductsAllCache(): Promise<void> {
+  await redisClient.del(PRODUCTS_ALL_CACHE_KEY);
+  console.log("Cache delete: products:all");
+}
+
+async function deleteSingleProdcutCache(productId: number): Promise<void> {
+  const cacheKey = getProductCacheKey(productId);
+  await redisClient.del(cacheKey);
+  console.log("Cache delete: ", cacheKey);
+  
+}
+
 export async function createProduct(
   input: CreateProductInput,
 ): Promise<Product> {
@@ -107,7 +151,11 @@ export async function createProduct(
     [input.name, input.description, input.price, input.category, input.stock],
   );
 
-  return mapProductRow(result.rows[0]);
+  const newlyCreatedProduct = mapProductRow(result.rows[0]);
+
+  await deleteProductsAllCache();
+
+  return newlyCreatedProduct;
 }
 
 export async function updateProduct(
@@ -138,5 +186,10 @@ export async function updateProduct(
     [name, description, price, category, stock, id],
   );
 
-  return mapProductRow(result.rows[0]);
+  const updatedProduct = mapProductRow(result.rows[0]);
+  
+  await deleteSingleProdcutCache(id);
+  await deleteProductsAllCache();
+
+  return updatedProduct;
 }
