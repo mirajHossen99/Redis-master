@@ -1,7 +1,8 @@
+--- Packages install ---
+
 npm i redis
 
-
-
+------------------------
 
 what is actually redis?
 => Redis is in memory data store. 
@@ -17,3 +18,14 @@ Why Redis is use? or Why we need Redis?
    - Limit how many req a user can make running background jobs
    - Short lived or frequent acessed data
    - Store the data on disk(PostgreSQL) vs Memory(Redis)
+
+----- Caching -----
+=> storing the copy of data in a first place so future request can be read very quickly
+Reduce database load, Improve response time
+
+----- Cache aside pattern -----
+1. Check cache first.
+2. If cache has data return it
+3. Cache doesn't have data, read from main database then save in cache
+
+
