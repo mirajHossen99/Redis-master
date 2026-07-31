@@ -1,0 +1,19 @@
+npm i redis
+
+
+
+
+what is actually redis?
+=> Redis is in memory data store. 
+   Keeps data mainly in RAM, read and write operations will be very fast.
+   Cache, Rate limiter, Message broker, temp fast layer in front of your normal/main database
+
+Why Redis is use? or Why we need Redis?
+=> PostgreSQL --> Permanent Structured data
+   Redis -->
+   - Speed or temp data?? Redis can be helpfull
+   - Caching product list,
+   - Count prodcut views
+   - Limit how many req a user can make running background jobs
+   - Short lived or frequent acessed data
+   - Store the data on disk(PostgreSQL) vs Memory(Redis)
